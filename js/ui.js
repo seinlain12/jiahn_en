@@ -1,91 +1,89 @@
 const UI = {
-    contentArea: () => document.getElementById('content'),
+    getContentArea: function() {
+        return document.getElementById('content');
+    },
 
     renderLogs: function() {
         const dates = Object.keys(studyData.logs).sort().reverse();
         let html = `
-            <h2>📅 공부 기록</h2>
-            <button class="add-btn" onclick="App.askNewDate()">+ 날짜 추가</button>
-            <ul class="date-list">
-                ${dates.map(date => `<li onclick="UI.renderLogDetail('${date}')">${date}</li>`).join('')}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>📅 공부 기록</h2>
+                <button class="brown-btn" onclick="App.askNewDate()">+ 날짜 추가</button>
+            </div>
+            <ul style="list-style:none;">
+                ${dates.map(date => `
+                    <li style="padding:15px; border:1px solid #eee; margin-bottom:10px; border-radius:8px; cursor:pointer; background:#fff;" 
+                        onclick="UI.renderLogDetail('${date}')">
+                        <strong>${date}</strong> 공부 기록 보기
+                    </li>
+                `).join('')}
             </ul>`;
-        this.contentArea().innerHTML = html;
+        this.getContentArea().innerHTML = html;
     },
 
     renderLogDetail: function(date) {
         const log = studyData.logs[date];
         let html = `
-            <div class="detail-header">
-                <span class="back-link" onclick="UI.renderLogs()">← 목록으로</span>
-                <h2>📅 ${date} 공부 내용</h2>
+            <button class="white-btn" onclick="UI.renderLogs()" style="margin-bottom:15px;">← 뒤로가기</button>
+            <h2>📅 ${date} 상세 내용</h2>
+            
+            <div style="display:flex; flex-direction:column; margin:20px 0;">
+                ${log.chats.map(chat => `<div class="chat-bubble ${chat.role}">${chat.text}</div>`).join('')}
             </div>
-            <div class="chat-container">
-                ${log.chats.map(chat => `
-                    <div class="chat-bubble ${chat.role}"><div class="bubble-content">${chat.text}</div></div>
+
+            <div style="background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:20px;">
+                <textarea id="geminiIn" placeholder="Gemini 답변 복사/붙여넣기" style="width:100%; height:60px;"></textarea>
+                <textarea id="meIn" placeholder="나의 질문/답변 입력" style="width:100%; height:60px;"></textarea>
+                <button class="brown-btn" onclick="App.addChat('${date}')" style="width:100%">대화 저장</button>
+            </div>
+
+            <h3>⭐ 필수 문장 추가</h3>
+            <div style="display:flex; gap:5px; margin-top:10px;">
+                <input type="text" id="sentenceIn" style="flex:1;" placeholder="영어 문장을 입력하세요">
+                <button class="brown-btn" onclick="App.addSentence('${date}')">추가</button>
+            </div>
+
+            <div style="margin-top:20px;">
+                ${log.sentences.map((s, i) => `
+                    <div class="sentence-item-card">
+                        <div><strong>${s.text}</strong><br><small>${s.trans}</small></div>
+                        <button onclick="App.speak('${s.text.replace(/'/g, "\\'")}')">🔊</button>
+                    </div>
                 `).join('')}
             </div>
-            <div class="input-section">
-                <h3>✍️ 새 대화 추가</h3>
-                <textarea id="geminiIn" placeholder="Gemini가 한 말"></textarea>
-                <textarea id="meIn" placeholder="내가 한 말"></textarea>
-                <div class="btn-group">
-                    <button class="white-btn" onclick="App.addChat('${date}')">➕ 대화 추가</button>
-                    <button class="brown-btn" onclick="App.saveData()">💾 저장</button>
-                </div>
-            </div>
-            <div class="sentence-section">
-                <h3>⭐ 필수 문장</h3>
-                <div class="sentence-input-group">
-                    <input type="text" id="sentenceIn" placeholder="영어 문장 입력">
-                    <button onclick="App.addSentence('${date}')">+ 추가</button>
-                </div>
-                <div id="sentenceList">
-                    ${log.sentences.map((s, i) => `
-                        <div class="sentence-item-card">
-                            <div class="s-content"><strong>${s.text}</strong><span>${s.trans}</span></div>
-                            <div class="s-actions">
-                                <button onclick="App.speak('${s.text.replace(/'/g, "\\'")}')">🔊</button>
-                                <button class="del-x" onclick="App.delSentence('${date}', ${i})">❌</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            <button class="delete-all-btn" onclick="App.deleteFullDate('${date}')">🗑️ 날짜 삭제</button>
         `;
-        this.contentArea().innerHTML = html;
+        this.getContentArea().innerHTML = html;
     },
 
     renderSentencesPage: function() {
-        let html = `<h2>⭐ 필수 문장 모음</h2>`;
+        let html = `<h2>⭐ 전체 필수 문장</h2><div style="margin-top:20px;">`;
         for (const date in studyData.logs) {
             studyData.logs[date].sentences.forEach(s => {
                 html += `
-                    <div class="sentence-item-card all-view">
-                        <div class="s-content"><strong>${s.text}</strong><p>${s.trans}</p></div>
-                        <button class="speak-btn-all" onclick="App.speak('${s.text.replace(/'/g, "\\'")}')">🔊 발음 듣기</button>
+                    <div class="sentence-item-card">
+                        <div><strong>${s.text}</strong><p>${s.trans}</p></div>
+                        <button onclick="App.speak('${s.text.replace(/'/g, "\\'")}')">🔊</button>
                     </div>`;
             });
         }
-        this.contentArea().innerHTML = html;
+        html += `</div>`;
+        this.getContentArea().innerHTML = html;
     },
 
     renderTestPage: function(sentenceObj) {
-        let html = `
-            <div class="test-container">
-                <h2>🎲 랜덤 문장 테스트</h2>
-                <div class="test-card">
-                    <p>이 문장은 무슨 뜻일까요?</p>
-                    <h3>${sentenceObj.text}</h3>
-                    <button class="test-speak-btn" onclick="App.speak('${sentenceObj.text.replace(/'/g, "\\'")}')">🔊 발음 듣기</button>
-                    <div class="test-answer-area">
-                        <input type="text" id="testInput" placeholder="뜻을 입력하세요" onkeypress="if(event.keyCode==13) App.checkAnswer()">
-                        <button class="brown-btn" onclick="App.checkAnswer()">정답 확인</button>
-                    </div>
+        this.getContentArea().innerHTML = `
+            <div style="text-align:center; padding:20px;">
+                <h2>🎲 랜덤 테스트</h2>
+                <div style="margin:30px 0; padding:20px; border:1px solid #ddd; border-radius:15px;">
+                    <p style="color:#666; margin-bottom:10px;">다음 문장의 뜻은?</p>
+                    <h1 style="margin-bottom:20px;">${sentenceObj.text}</h1>
+                    <input type="text" id="testInput" style="width:100%; max-width:300px; text-align:center; padding:10px;" placeholder="한글 뜻 입력">
                     <div id="testResult"></div>
-                    <button class="white-btn next-test-btn" onclick="App.startRandomTest()">다음 문제 ➡️</button>
+                    <div style="margin-top:20px; display:flex; justify-content:center; gap:10px;">
+                        <button class="brown-btn" onclick="App.checkAnswer()">확인</button>
+                        <button class="white-btn" onclick="App.startRandomTest()">다음 문제</button>
+                    </div>
                 </div>
             </div>`;
-        this.contentArea().innerHTML = html;
     }
 };
