@@ -4,89 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>English Study Hub</title>
-    
     <style>
-        /* CSS 변수 및 기본 스타일 */
-        :root {
-            --main-brown: #8b5a2b;
-            --light-yellow: #fffbe6;
-            --sidebar-width: 250px;
-        }
-
+        :root { --main-brown: #8b5a2b; --light-yellow: #fffbe6; --sidebar-width: 250px; }
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; margin: 0; padding: 0; }
-        
-        /* [수정] body의 overflow: hidden은 유지하되 높이를 100%로 고정 */
-        body { 
-            display: none; /* 비밀번호 확인 전까지 숨김 */
-            flex-direction: column; 
-            height: 100vh; 
-            background: #fdfdfd; 
-            overflow: hidden; 
-        }
-
-        /* 레이아웃 */
+        body { display: none; flex-direction: column; height: 100vh; background: #fdfdfd; overflow: hidden; }
         .header { height: 60px; padding: 0 20px; display: flex; align-items: center; border-bottom: 1px solid #eee; background: #fff; z-index: 1100; position: relative; font-weight: bold; }
         .menu-btn { background: none; border: none; font-size: 24px; cursor: pointer; margin-right: 15px; }
-        
-        /* [수정] 레이아웃 영역이 전체 화면을 차지하도록 설정 */
         .layout { display: flex; flex: 1; overflow: hidden; position: relative; height: calc(100vh - 60px); }
-
-        /* 사이드바 */
         .sidebar { width: var(--sidebar-width); background: #fff; border-right: 1px solid #eee; transition: 0.3s; z-index: 1050; }
         .sidebar li { padding: 15px 20px; cursor: pointer; border-bottom: 1px solid #f9f9f9; display: flex; align-items: center; gap: 10px; list-style: none; }
-        .sidebar li:hover { background: #f5f5f5; }
-
-        /* 콘텐츠 영역 - 스크롤 해결의 핵심 */
-        .content { 
-            flex: 1; 
-            padding: 20px; 
-            overflow-y: auto !important; /* 세로 스크롤 강제 활성화 */
-            -webkit-overflow-scrolling: touch; /* 모바일 부드러운 스크롤 */
-            background: #fff; 
-        }
-
-        /* 채팅 및 카드 스타일 */
-        .chat-bubble { 
-            padding: 15px; border-radius: 10px; margin-bottom: 10px; max-width: 85%; 
-            white-space: pre-wrap; 
-            line-height: 1.6;
-        }
-        .chat-bubble.gemini { background: #f1f1f1; align-self: flex-start; }
-        .chat-bubble.me { background: #e3effd; color: #1a4da1; align-self: flex-end; }
-
-        .sentence-item-card { 
-            background: var(--light-yellow); border: 1px solid #ffe58f; 
-            padding: 15px; border-radius: 10px; margin-bottom: 10px; 
-            display: flex; justify-content: space-between; align-items: center; 
-        }
-        .brown-btn { background: var(--main-brown); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
-        .delete-btn { background: #ff4d4f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
-        .delete-all-btn { width: 100%; padding: 15px; border: 1px solid #ff4d4f; color: #ff4d4f; background: #fff; border-radius: 8px; margin-top: 30px; cursor: pointer; }
-
-        /* 모바일 대응 */
-        @media (max-width: 768px) {
-            .sidebar { position: absolute; left: -250px; height: 100%; }
-            .sidebar.active { left: 0; }
-            .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1040; }
-            .overlay.active { display: block; }
-        }
+        .content { flex: 1; padding: 20px; overflow-y: auto !important; -webkit-overflow-scrolling: touch; background: #fff; }
+        @media (max-width: 768px) { .sidebar { position: absolute; left: -250px; height: 100%; } .sidebar.active { left: 0; } .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1040; } .overlay.active { display: block; } }
     </style>
-
     <script>
         (function() {
             const myPassword = "970808"; 
-            
             if (sessionStorage.getItem("isAllowed") === "true") {
                 document.documentElement.style.display = "block";
-                window.onload = function() { document.body.style.display = "flex"; };
+                window.onload = () => document.body.style.display = "flex";
                 return;
             }
-
             const entry = prompt("비밀번호를 입력하세요.");
             if (entry === myPassword) {
                 sessionStorage.setItem("isAllowed", "true");
                 document.documentElement.style.display = "block";
-                window.onload = function() { document.body.style.display = "flex"; };
+                window.onload = () => document.body.style.display = "flex";
             } else {
                 alert("접근 권한이 없습니다.");
                 window.location.href = "https://www.google.com";
@@ -95,12 +37,10 @@
     </script>
 </head>
 <body>
-
     <header class="header">
         <button id="menuBtn" class="menu-btn">☰</button>
         <h1 class="app-title">English Study Hub</h1>
     </header>
-
     <div class="layout">
         <nav id="sidebar" class="sidebar">
             <ul>
@@ -110,13 +50,14 @@
                 <li data-view="gemini">🤖 Gemini로 공부</li>
             </ul>
         </nav>
-
         <div id="overlay" class="overlay"></div>
-
-        <main id="content" class="content">
-            </main>
+        <main id="content" class="content"></main>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
