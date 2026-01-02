@@ -1,6 +1,6 @@
 const App = {
     currentTestSentence: null,
-    currentTestWord: null, // 현재 테스트 중인 단어 저장
+    currentTestWord: null,
     geminiUrl: "https://gemini.google.com/u/3/app/c817dbe3e5aa5be3?hl=ko&pageId=none",
 
     init: function() {
@@ -11,6 +11,8 @@ const App = {
             loadData(() => {
                 UI.renderLogs();
             });
+            // 브라우저 음성 목록 미리 로드 (iOS 대응)
+            window.speechSynthesis.getVoices();
         } else {
             alert("비밀번호가 틀렸습니다.");
             window.location.reload();
@@ -26,11 +28,33 @@ const App = {
                 else if (view === 'sentences') UI.renderSentencesPage();
                 else if (view === 'words') UI.renderWordsPage();
                 else if (view === 'test') App.startRandomTest();
-                else if (view === 'wordTest') App.startWordTest(); // 단어 테스트 시작
+                else if (view === 'wordTest') App.startWordTest();
                 else if (view === 'gemini') window.open(this.geminiUrl, '_blank');
                 document.getElementById('sidebar').classList.remove('active');
             };
         });
+    },
+
+    // 🔊 개선된 영어 발음 함수
+    speak: function(text) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+
+        // 고품질 음성(Alex, Samantha, Premium 순) 우선 검색
+        const highQualityVoice = voices.find(v => v.name.includes('Alex')) || 
+                                 voices.find(v => v.name.includes('Samantha')) ||
+                                 voices.find(v => v.name.includes('Premium')) ||
+                                 voices.find(v => v.lang === 'en-US');
+
+        if (highQualityVoice) {
+            utter.voice = highQualityVoice;
+        } else {
+            utter.lang = 'en-US';
+        }
+
+        utter.rate = 0.9; // 속도를 살짝 늦춰 더 자연스럽게 함
+        window.speechSynthesis.speak(utter);
     },
 
     addWord: function() {
@@ -54,7 +78,6 @@ const App = {
         }
     },
 
-    // 📖 단어 테스트 시작
     startWordTest: function() {
         const words = studyData.words || [];
         if (words.length === 0) return alert("단어장에 등록된 단어가 없습니다.");
@@ -62,16 +85,14 @@ const App = {
         UI.renderWordTestPage(this.currentTestWord);
     },
 
-    // 📖 단어 테스트 정답 확인
     checkWordAnswer: function() {
         const userInput = document.getElementById('wordTestInput').value.trim().toLowerCase();
         if (!userInput) return;
         const correct = this.currentTestWord.word.toLowerCase();
         const resDiv = document.getElementById('wordTestResult');
-        
         if (userInput === correct) {
             resDiv.innerHTML = `<div class="res correct" style="color:green; font-weight:bold; margin-top:10px;">⭕ 정답입니다!</div>`;
-            App.speak(correct); // 정답 시 발음 들려주기
+            App.speak(correct);
         } else {
             resDiv.innerHTML = `<div class="res wrong" style="color:red; font-weight:bold; margin-top:10px;">❌ 틀렸습니다. 정답은 [ ${correct} ] 입니다.</div>`;
         }
@@ -152,13 +173,6 @@ const App = {
         if (all.length === 0) return alert("문장이 없습니다.");
         this.currentTestSentence = all[Math.floor(Math.random() * all.length)];
         UI.renderTestPage(this.currentTestSentence);
-    },
-
-    speak: function(text) {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = 'en-US';
-        window.speechSynthesis.speak(utter);
     },
 
     askNewDate: function() {
