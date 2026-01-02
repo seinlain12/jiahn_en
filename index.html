@@ -4,23 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>English Study Hub</title>
+    
     <style>
         body { display: none; }
     </style>
     
     <script>
         (function() {
-            const myPassword = "970808"; // 사용할 비밀번호를 여기 적으세요!
+            const myPassword = "970808"; 
+            
+            // 한 번 로그인하면 브라우저 탭을 닫기 전까지 유지됨
+            if (sessionStorage.getItem("isAllowed") === "true") {
+                document.documentElement.style.display = "block";
+                window.onload = function() {
+                    document.body.style.display = "block";
+                };
+                return;
+            }
+
             const entry = prompt("비밀번호를 입력하세요.");
             
             if (entry === myPassword) {
-                // 비밀번호가 맞으면 body를 다시 보여줌
+                sessionStorage.setItem("isAllowed", "true");
                 document.documentElement.style.display = "block";
                 window.onload = function() {
                     document.body.style.display = "block";
                 };
             } else {
-                // 틀리면 다른 곳으로 이동시키거나 경고
                 alert("접근 권한이 없습니다.");
                 window.location.href = "https://www.google.com";
             }
