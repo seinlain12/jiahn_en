@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>jiahn Study</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* 비밀번호 입력 전까지 화면을 숨깁니다 */
-        body { display: none; }
-    </style>
+    <style>body { display: none; }</style>
 </head>
 <body>
 
@@ -22,8 +19,9 @@
         <ul>
             <li data-view="dates">📅 공부 기록</li>
             <li data-view="sentences">⭐ 필수 문장</li>
+            <li data-view="words">📖 나의 단어장</li>
             <li data-view="test">🎲 랜덤 테스트</li>
-            <li data-view="gemini">🤖 Gemini로 이어서 공부</li>
+            <li data-view="wordTest">📖 단어 테스트</li> <li data-view="gemini">🤖 Gemini로 이어서 공부</li>
         </ul>
     </nav>
 
@@ -34,7 +32,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/app.js"></script>
