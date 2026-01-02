@@ -1,6 +1,6 @@
 const App = {
     currentTestSentence: null,
-    geminiUrl: "https://gemini.google.com/u/2/app/655389b059f1115e?hl=ko&pageId=none",
+    geminiUrl: "https://gemini.google.com/u/3/app/c817dbe3e5aa5be3?hl=ko&pageId=none",
 
     init: function() {
         // 🔒 비밀번호 인증 (970808)
@@ -128,3 +128,4 @@ const App = {
     }
 };
 document.addEventListener('DOMContentLoaded', () => App.init());
+
