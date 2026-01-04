@@ -1,7 +1,6 @@
 const UI = {
     contentArea: () => document.getElementById('content'),
 
-    // 🎲 목록을 랜덤하게 섞어주는 헬퍼 함수 추가
     shuffleArray: function(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -61,7 +60,6 @@ const UI = {
         if(container) container.scrollTop = container.scrollHeight;
     },
 
-    // ⭐ 필수 문장 모음 (랜덤 순서 적용)
     renderSentencesPage: function() {
         let allSentences = [];
         for (const date in studyData.logs) {
@@ -70,10 +68,18 @@ const UI = {
             });
         }
         
-        // 목록 섞기
         const shuffled = this.shuffleArray([...allSentences]);
 
-        let html = `<h2>⭐ 필수 문장 모음 (랜덤)</h2>`;
+        let html = `
+            <div class="sentences-page-header">
+                <h2>⭐ 필수 문장 모음 (랜덤)</h2>
+                <div id="autoPlayControl" style="margin-bottom:20px;">
+                    <button id="startPlayBtn" class="brown-btn" style="width:100%;" onclick="App.startAutoPlay()">🔀 전체 랜덤 재생 (3초 간격)</button>
+                    <button id="stopPlayBtn" class="white-btn" style="width:100%; display:none; border-color:red; color:red;" onclick="App.stopAutoPlay()">⏹️ 재생 중지</button>
+                </div>
+            </div>
+        `;
+        
         shuffled.forEach(s => {
             html += `
                 <div class="sentence-item-card all-view">
@@ -84,11 +90,23 @@ const UI = {
         this.contentArea().innerHTML = html;
     },
 
-    // 📖 나의 단어장 (랜덤 순서 적용)
+    // 💡 재생 상태에 따른 버튼 전환
+    updateAutoPlayUI: function(isPlaying) {
+        const startBtn = document.getElementById('startPlayBtn');
+        const stopBtn = document.getElementById('stopPlayBtn');
+        if (!startBtn || !stopBtn) return;
+        
+        if (isPlaying) {
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
+        } else {
+            startBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+        }
+    },
+
     renderWordsPage: function() {
         const words = studyData.words || [];
-        
-        // 목록 섞기
         const shuffledWords = this.shuffleArray([...words]);
 
         let html = `
@@ -104,7 +122,6 @@ const UI = {
             </div>
             <div id="wordList">
                 ${shuffledWords.map((w) => {
-                    // 삭제 기능을 위해 원본 배열에서의 index를 찾아야 함
                     const originalIndex = words.indexOf(w);
                     return `
                     <div class="sentence-item-card word-card">
