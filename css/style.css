@@ -11,7 +11,7 @@ body { display: flex; flex-direction: column; height: 100vh; background: #fdfdfd
 .content { 
     flex: 1; 
     padding: 20px; 
-    padding-bottom: 280px; /* 아이폰 하단 바 높이만큼 넉넉하게 확보 */
+    padding-bottom: 280px; /* 아이폰 하단 바 높이만큼 확보 */
     overflow-y: auto; 
     -webkit-overflow-scrolling: touch; 
 }
