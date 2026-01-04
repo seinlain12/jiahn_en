@@ -2,6 +2,11 @@ const App = {
     currentTestSentence: null,
     currentTestWord: null,
     geminiUrl: "https://gemini.google.com/u/3/app/c817dbe3e5aa5be3?hl=ko&pageId=none",
+    
+    // 💡 자동 재생 상태 관리 변수
+    isAutoPlaying: false,
+    autoPlayList: [],
+    autoPlayIndex: 0,
 
     init: function() {
         const password = prompt("비밀번호를 입력하세요.");
@@ -10,10 +15,9 @@ const App = {
             this.bindMenu();
             loadData(() => { UI.renderLogs(); });
             
-            // 음성 목록 로딩 보장 (iOS 대응)
-            window.speechSynthesis.getVoices();
+            this.getBestVoices(); 
             if (window.speechSynthesis.onvoiceschanged !== undefined) {
-                window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = () => this.getBestVoices();
             }
         } else {
             alert("비밀번호가 틀렸습니다.");
@@ -21,27 +25,32 @@ const App = {
         }
     },
 
-    // 🌐 언어별 프리미엄 음성 추출 (Alex & Yuna 고정)
+    getBestVoices: function() {
+        return window.speechSynthesis.getVoices();
+    },
+
     loadVoice: function(text) {
-        const voices = window.speechSynthesis.getVoices();
+        const voices = this.getBestVoices();
         const isKorean = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(text);
+        const isJapanese = /[\u3040-\u30ff]/.test(text);
 
         if (isKorean) {
-            // 한글 포함 시: 유나(Yuna) 우선 선택
             return voices.find(v => v.name.includes('Yuna')) || 
+                   voices.find(v => v.lang.includes('ko') && v.name.includes('Enhanced')) ||
                    voices.find(v => v.lang.includes('ko'));
+        } else if (isJapanese) {
+            return voices.find(v => v.name.includes('Kyoko')) || 
+                   voices.find(v => v.lang.includes('ja'));
         } else {
-            // 영어만 있을 시: 알렉스(Alex) 우선 선택
             return voices.find(v => v.name.includes('Alex')) || 
                    voices.find(v => v.name.includes('Samantha')) || 
-                   voices.find(v => v.lang.includes('en'));
+                   voices.find(v => v.lang.includes('en-US'));
         }
     },
 
-    speak: function(text) {
+    speak: function(text, callback) {
         if (!text) return;
 
-        // 🚫 발음 방해 요소(이모지, 따옴표, 줄바꿈) 정제
         let cleanText = text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\u200d/g, ""); 
         cleanText = cleanText.replace(/[\*\"\#\(\)]/g, ""); 
         cleanText = cleanText.replace(/[\r\n]+/gm, " ").replace(/\s+/g, " ").trim();
@@ -56,14 +65,64 @@ const App = {
             utter.lang = selectedVoice.lang;
         }
 
-        utter.rate = 0.9; // 자연스러운 속도
+        utter.rate = 0.9; 
+        utter.pitch = 1.0;
+
+        // 💡 재생이 끝나면 실행할 동작 (자동 재생용)
+        if (callback) {
+            utter.onend = callback;
+        }
+        
         window.speechSynthesis.speak(utter);
+    },
+
+    // 💡 전체 랜덤 재생 시작
+    startAutoPlay: function() {
+        let allSentences = [];
+        for (const date in studyData.logs) {
+            (studyData.logs[date].sentences || []).forEach(s => allSentences.push(s.text));
+        }
+
+        if (allSentences.length === 0) return alert("재생할 문장이 없습니다.");
+
+        // 리스트 섞기
+        this.autoPlayList = UI.shuffleArray([...allSentences]);
+        this.autoPlayIndex = 0;
+        this.isAutoPlaying = true;
+        
+        UI.updateAutoPlayUI(true);
+        this.playNextInLoop();
+    },
+
+    // 💡 다음 문장 재생 (3초 텀 적용)
+    playNextInLoop: function() {
+        if (!this.isAutoPlaying || this.autoPlayIndex >= this.autoPlayList.length) {
+            this.stopAutoPlay();
+            return;
+        }
+
+        const currentText = this.autoPlayList[this.autoPlayIndex];
+        this.speak(currentText, () => {
+            this.autoPlayIndex++;
+            if (this.isAutoPlaying) {
+                // 문장 종료 후 3초 대기 후 다음 문장
+                setTimeout(() => this.playNextInLoop(), 3000);
+            }
+        });
+    },
+
+    // 💡 재생 중지
+    stopAutoPlay: function() {
+        this.isAutoPlaying = false;
+        window.speechSynthesis.cancel();
+        UI.updateAutoPlayUI(false);
     },
 
     bindMenu: function() {
         document.getElementById('menuBtn').onclick = () => document.getElementById('sidebar').classList.toggle('active');
         document.querySelectorAll('.sidebar li').forEach(item => {
             item.onclick = () => {
+                this.stopAutoPlay(); // 메뉴 이동 시 자동 재생 중지
                 const view = item.getAttribute('data-view');
                 if (view === 'dates') UI.renderLogs();
                 else if (view === 'sentences') UI.renderSentencesPage();
