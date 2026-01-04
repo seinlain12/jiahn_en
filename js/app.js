@@ -10,7 +10,7 @@ const App = {
             this.bindMenu();
             loadData(() => { UI.renderLogs(); });
             
-            // 음성 목록 미리 로드
+            // 음성 목록 로딩 보장
             window.speechSynthesis.getVoices();
             if (window.speechSynthesis.onvoiceschanged !== undefined) {
                 window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
@@ -21,17 +21,17 @@ const App = {
         }
     },
 
-    // 🌐 언어별 프리미엄 음성 추출 로직
+    // 🌐 언어별 프리미엄 음성 추출 (Alex 발음 보존)
     loadVoice: function(text) {
         const voices = window.speechSynthesis.getVoices();
         const isKorean = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(text);
 
         if (isKorean) {
-            // 한글이 있으면 유나(프리미엄)를 먼저 찾음
+            // 한글 포함 시: 유나(프리미엄) 우선 선택
             return voices.find(v => v.name.includes('Yuna')) || 
                    voices.find(v => v.lang.includes('ko'));
         } else {
-            // 영어만 있으면 기존처럼 알렉스(Alex) 고정! (이래야 발음이 안 깨집니다)
+            // 영어만 있을 시: 알렉스(Alex) 고정 (발음 보존 핵심)
             return voices.find(v => v.name.includes('Alex')) || 
                    voices.find(v => v.name.includes('Samantha')) || 
                    voices.find(v => v.lang.includes('en'));
@@ -41,7 +41,7 @@ const App = {
     speak: function(text) {
         if (!text) return;
 
-        // 발음 방해 요소(이모지, 특수문자, 줄바꿈) 제거
+        // 🚫 발음 방해 요소(이모지, 따옴표, 줄바꿈) 청소
         let cleanText = text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\u200d/g, ""); 
         cleanText = cleanText.replace(/[\*\"\#\(\)]/g, ""); 
         cleanText = cleanText.replace(/[\r\n]+/gm, " ").replace(/\s+/g, " ").trim();
