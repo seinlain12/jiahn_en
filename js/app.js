@@ -2,43 +2,62 @@ const App = {
     currentTestSentence: null,
     currentTestWord: null,
     geminiUrl: "https://gemini.google.com/u/3/app/c817dbe3e5aa5be3?hl=ko&pageId=none",
-    audio: new Audio(), // 음성 재생을 위한 오디오 객체 생성
 
     init: function() {
         const password = prompt("비밀번호를 입력하세요.");
         if (password === "970808") {
             document.body.style.display = "flex";
             this.bindMenu();
-            loadData(() => {
-                UI.renderLogs();
-            });
+            loadData(() => { UI.renderLogs(); });
+            
+            // 음성 목록 로딩 보장 (iOS 대응)
+            window.speechSynthesis.getVoices();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+            }
         } else {
             alert("비밀번호가 틀렸습니다.");
             window.location.reload();
         }
     },
 
-    // 🌐 구글 번역 엔진을 이용한 무료 고품질 TTS 함수
+    // 🌐 언어별 프리미엄 음성 추출 (Alex & Yuna 고정)
+    loadVoice: function(text) {
+        const voices = window.speechSynthesis.getVoices();
+        const isKorean = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(text);
+
+        if (isKorean) {
+            // 한글 포함 시: 유나(Yuna) 우선 선택
+            return voices.find(v => v.name.includes('Yuna')) || 
+                   voices.find(v => v.lang.includes('ko'));
+        } else {
+            // 영어만 있을 시: 알렉스(Alex) 우선 선택
+            return voices.find(v => v.name.includes('Alex')) || 
+                   voices.find(v => v.name.includes('Samantha')) || 
+                   voices.find(v => v.lang.includes('en'));
+        }
+    },
+
     speak: function(text) {
         if (!text) return;
 
-        // 🚫 불필요한 기호 및 이모지 제거 (발음 최적화)
+        // 🚫 발음 방해 요소(이모지, 따옴표, 줄바꿈) 정제
         let cleanText = text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\u200d/g, ""); 
         cleanText = cleanText.replace(/[\*\"\#\(\)]/g, ""); 
-        cleanText = cleanText.replace(/[\r\n]+/gm, " ").trim();
+        cleanText = cleanText.replace(/[\r\n]+/gm, " ").replace(/\s+/g, " ").trim();
+        
+        window.speechSynthesis.cancel(); 
 
-        // 🔍 언어 감지 (한글이 포함되어 있으면 ko, 아니면 en)
-        const isKorean = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(cleanText);
-        const lang = isKorean ? 'ko' : 'en';
+        const utter = new SpeechSynthesisUtterance(cleanText);
+        const selectedVoice = this.loadVoice(cleanText);
+        
+        if (selectedVoice) {
+            utter.voice = selectedVoice;
+            utter.lang = selectedVoice.lang;
+        }
 
-        // 🔗 구글 TTS URL 생성 (client=tw-ob 파라미터가 핵심)
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=${lang}&client=tw-ob`;
-
-        this.audio.pause(); // 이전 재생 중단
-        this.audio.src = ttsUrl;
-        this.audio.play().catch(e => {
-            console.error("재생 오류:", e);
-        });
+        utter.rate = 0.9; // 자연스러운 속도
+        window.speechSynthesis.speak(utter);
     },
 
     bindMenu: function() {
